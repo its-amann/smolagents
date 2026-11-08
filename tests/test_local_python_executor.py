@@ -1493,6 +1493,28 @@ exec(compile('{unsafe_code}', 'no filename', 'exec'))
         assert state["result"] == 7
         assert state["exits"] == [None]
 
+    def test_final_answer_inside_with_block_calls_exit(self):
+        code = dedent("""
+            exits = []
+
+            class Recorder:
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, exc_type, exc_value, traceback):
+                    exits.append(exc_type)
+                    return False
+
+            with Recorder():
+                final_answer(5)
+        """)
+        state = {}
+        result, is_final_answer = evaluate_python_code(code, {"final_answer": (lambda answer: answer)}, state=state)
+
+        assert result == 5
+        assert is_final_answer is True
+        assert state["exits"] == [None]
+
     def test_dangerous_builtins_are_callable_if_explicitly_added(self):
         dangerous_code = dedent("""
             eval("1 + 1")
