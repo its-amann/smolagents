@@ -251,6 +251,43 @@ test_func(**None)
         with pytest.raises(InterpreterError, match="not defined"):
             evaluate_python_code(code, BASE_PYTHON_TOOLS, state={})
 
+    def test_nested_function_does_not_replace_global_function(self):
+        code = dedent("""\
+            def helper():
+                return "global"
+
+            def outer():
+                def helper():
+                    return "inner"
+                return helper()
+
+            def countdown(n):
+                def step(k):
+                    return 0 if k == 0 else step(k - 1)
+                return step(n)
+
+            def make_adder(x):
+                def add(y):
+                    return x + y
+                return add
+
+            (outer(), helper(), countdown(3), make_adder(2)(3))
+        """)
+        result, _ = evaluate_python_code(code, BASE_PYTHON_TOOLS, state={})
+        assert result == ("inner", "global", 0, 5)
+
+    def test_nested_function_is_not_defined_globally(self):
+        code = dedent("""\
+            def outer():
+                def inner():
+                    return 1
+                return inner()
+            outer()
+            inner
+        """)
+        with pytest.raises(InterpreterError, match="not defined"):
+            evaluate_python_code(code, BASE_PYTHON_TOOLS, state={})
+
     def test_evaluate_class_def_with_assign_attribute_target(self):
         """
         Test evaluate_class_def function when stmt is an instance of ast.Assign with ast.Attribute target.
