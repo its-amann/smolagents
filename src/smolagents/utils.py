@@ -342,6 +342,11 @@ def instance_to_source(instance, base_cls=None):
                 continue
 
         methods[name] = method
+        if isinstance(func, property):
+            # the setter and deleter are separate functions; without them the rebuilt tool gets a read-only property
+            for accessor_kind, accessor in (("setter", func.fset), ("deleter", func.fdel)):
+                if accessor is not None:
+                    methods[f"{name}.{accessor_kind}"] = accessor
 
     for name, method in methods.items():
         method_source = get_source(method)

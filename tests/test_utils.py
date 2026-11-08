@@ -581,3 +581,37 @@ def test_agent_gradio_app_template_excludes_class_keyword():
         ast.parse(result)
     except SyntaxError as e:
         pytest.fail(f"Generated app.py contains syntax error: {e}")
+
+
+def test_instance_to_source_preserves_property_setter_and_deleter():
+    class CounterTool(Tool):
+        name = "counter_tool"
+        description = "Tool with a writable property."
+        inputs = {}
+        output_type = "integer"
+
+        @property
+        def step(self):
+            return getattr(self, "_step", 1)
+
+        @step.setter
+        def step(self, value):
+            self._step = value
+
+        @step.deleter
+        def step(self):
+            self._step = 1
+
+        def forward(self):
+            self.step = 2
+            value = self.step
+            del self.step
+            return value + self.step
+
+    source = instance_to_source(CounterTool(), base_cls=Tool)
+    assert "@step.setter" in source
+    assert "@step.deleter" in source
+
+    namespace = {}
+    exec(source, namespace)
+    assert namespace["CounterTool"]().forward() == 3
