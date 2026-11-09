@@ -218,7 +218,9 @@ def validate_tool_attributes(cls, check_imports: bool = True) -> None:
 
         def _check_init_function_parameters(self, node):
             # Check defaults in parameters
-            for arg, default in reversed(list(zip_longest(reversed(node.args.args), reversed(node.args.defaults)))):
+            positional = [*node.args.posonlyargs, *node.args.args]
+            params = reversed(list(zip_longest(reversed(positional), reversed(node.args.defaults))))
+            for arg, default in [*params, *zip(node.args.kwonlyargs, node.args.kw_defaults)]:
                 if default is None:
                     if arg.arg != "self":
                         self.non_defaults.add(arg.arg)

@@ -215,3 +215,70 @@ class KeywordOnlyArgumentTool(Tool):
 
 def test_validate_tool_attributes_with_keyword_only_helper_argument():
     assert validate_tool_attributes(KeywordOnlyArgumentTool) is None
+
+
+class InvalidToolKeywordOnlyInitParam(Tool):
+    name = "invalid_tool"
+    description = "Tool with required keyword-only init param"
+    inputs = {"input": {"type": "string", "description": "input"}}
+    output_type = "string"
+
+    def __init__(self, *, api_key):
+        super().__init__()
+        self.api_key = api_key
+
+    def forward(self, input: str) -> str:
+        return input
+
+
+class InvalidToolPositionalOnlyInitParam(Tool):
+    name = "invalid_tool"
+    description = "Tool with required positional-only init param"
+    inputs = {"input": {"type": "string", "description": "input"}}
+    output_type = "string"
+
+    def __init__(self, url, /, timeout=5):
+        super().__init__()
+        self.url = url
+        self.timeout = timeout
+
+    def forward(self, input: str) -> str:
+        return input
+
+
+class ValidToolPositionalOnlyAndKeywordOnlyInitParams(Tool):
+    name = "valid_tool"
+    description = "Tool with positional-only and keyword-only init params"
+    inputs = {"input": {"type": "string", "description": "input"}}
+    output_type = "string"
+
+    def __init__(self, url="x", /, timeout=5, *, api_key=None):
+        super().__init__()
+        self.url = url
+        self.timeout = timeout
+        self.api_key = api_key
+
+    def forward(self, input: str) -> str:
+        return input
+
+
+@pytest.mark.parametrize(
+    "tool_class, expected_error",
+    [
+        (
+            InvalidToolKeywordOnlyInitParam,
+            "Parameters in __init__ must have default values.*api_key",
+        ),
+        (
+            InvalidToolPositionalOnlyInitParam,
+            "Parameters in __init__ must have default values.*url",
+        ),
+    ],
+)
+def test_validate_tool_attributes_init_positional_only_and_keyword_only_errors(tool_class, expected_error):
+    with pytest.raises(ValueError, match=expected_error):
+        validate_tool_attributes(tool_class)
+
+
+def test_validate_tool_attributes_init_positional_only_and_keyword_only_valid():
+    assert validate_tool_attributes(ValidToolPositionalOnlyAndKeywordOnlyInitParams) is None
