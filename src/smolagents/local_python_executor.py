@@ -487,9 +487,11 @@ def create_function(
         for name, value in zip(arg_names, args):
             func_state[name] = value
 
-        # Set keyword arguments
+        # Set keyword arguments. A positional-only name passed by keyword only belongs in **kwargs
+        posonly_names = {arg.arg for arg in func_def.args.posonlyargs}
         for name, value in kwargs.items():
-            func_state[name] = value
+            if name not in posonly_names:
+                func_state[name] = value
 
         # Handle variable arguments
         if func_def.args.vararg:

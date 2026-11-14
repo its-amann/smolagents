@@ -1006,6 +1006,16 @@ r3 = r1 + r2
         res, _ = evaluate_python_code(code, {}, state={})
         assert res == 9
 
+    def test_positional_only_name_passed_by_keyword_goes_to_kwargs(self):
+        code = """
+def f(a, /, **kw):
+    return (a, kw)
+
+f(1, a=2)
+"""
+        res, _ = evaluate_python_code(code, {}, state={})
+        assert res == (1, {"a": 2})
+
     def test_print(self):
         code = "print(min([1, 2, 3]))"
         state = {}
