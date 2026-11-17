@@ -1245,6 +1245,16 @@ res = f(a=4)
         res, _ = evaluate_python_code(code, {}, {})
         assert res == 4
 
+    def test_keyword_only_none_default_ignores_outer_name(self):
+        code = """
+a = 99
+def f(*, a=None, b=5):
+    return (a, b)
+res = f()
+"""
+        res, _ = evaluate_python_code(code, {}, {})
+        assert res == (None, 5)
+
     def test_set(self):
         code = """
 S1 = {'a', 'b', 'c'}

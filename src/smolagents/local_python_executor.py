@@ -501,13 +501,9 @@ def create_function(
                 func_state[name] = value
 
         # Set default values for keyword-only arguments that were not provided
-        kwonly_defaults = [
-            None if default is None else evaluate_ast(default, state, static_tools, custom_tools, authorized_imports)
-            for default in func_def.args.kw_defaults
-        ]
-        for arg, default in zip(func_def.args.kwonlyargs, kwonly_defaults):
-            if default is not None and arg.arg not in func_state:
-                func_state[arg.arg] = default
+        for arg, default in zip(func_def.args.kwonlyargs, func_def.args.kw_defaults):
+            if default is not None and arg.arg not in kwargs:
+                func_state[arg.arg] = evaluate_ast(default, state, static_tools, custom_tools, authorized_imports)
 
         # Update function state with self and __class__
         if func_def.args.args and func_def.args.args[0].arg == "self":
