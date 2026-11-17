@@ -669,6 +669,11 @@ simple_set = {
         result, _ = evaluate_python_code(code, {}, state={})
         assert result == 2
 
+    def test_lambda_defaults_ignore_outer_names(self):
+        code = "b = 99\na = 7\nf = lambda x, b=2, *, a=None: (x + b, a)\nresult = f(1)"
+        result, _ = evaluate_python_code(code, {}, state={})
+        assert result == (3, None)
+
     def test_tuple_assignment(self):
         code = "a, b = 0, 1\nb"
         result, _ = evaluate_python_code(code, BASE_PYTHON_TOOLS, state={})

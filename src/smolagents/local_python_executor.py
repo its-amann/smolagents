@@ -439,23 +439,26 @@ def evaluate_lambda(
     def lambda_func(*values: Any, **kwargs: Any) -> Any:
         new_state = state.copy()
         extra_kwargs = dict(kwargs)
+        bound = set()
         # Positional arguments bind in order, including the positional-only ones.
         for name, value in zip(positional, values):
             new_state[name] = value
+            bound.add(name)
         # Remaining positional-or-keyword parameters may arrive as keywords.
         for index in range(len(values), len(positional)):
             name = positional[index]
             if index >= posonly_count and name in extra_kwargs:
                 new_state[name] = extra_kwargs.pop(name)
+                bound.add(name)
         for name, value in defaults.items():
-            if name not in new_state:
+            if name not in bound:
                 new_state[name] = value
         if vararg_name is not None:
             new_state[vararg_name] = tuple(values[len(positional) :])
-        for arg, default in zip(arguments.kwonlyargs, kwonly_defaults):
+        for arg, default_node, default in zip(arguments.kwonlyargs, arguments.kw_defaults, kwonly_defaults):
             if arg.arg in extra_kwargs:
                 new_state[arg.arg] = extra_kwargs.pop(arg.arg)
-            elif default is not None:
+            elif default_node is not None:
                 new_state[arg.arg] = default
         if kwarg_name is not None:
             new_state[kwarg_name] = extra_kwargs
