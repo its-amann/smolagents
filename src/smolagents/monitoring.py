@@ -105,7 +105,10 @@ class Monitor:
         """
         step_duration = step_log.timing.duration
         self.step_durations.append(step_duration)
-        console_outputs = f"[Step {len(self.step_durations)}: Duration {step_duration:.2f} seconds"
+        # Planning steps have no step_number: label them apart so the counter matches the agent's step numbers
+        step_number = getattr(step_log, "step_number", None)
+        label = "Planning" if step_number is None else f"Step {step_number}"
+        console_outputs = f"[{label}: Duration {step_duration:.2f} seconds"
 
         if step_log.token_usage is not None:
             self.total_input_token_count += step_log.token_usage.input_tokens

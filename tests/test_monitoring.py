@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import unittest
+from unittest.mock import patch
 
 import PIL.Image
 import pytest
@@ -120,6 +121,23 @@ class MonitoringTester(unittest.TestCase):
         result = agent.run("Fake task", return_full_result=True)
 
         assert agent.monitor.get_total_token_counts() == result.token_usage
+
+    def test_monitor_step_labels_match_agent_steps_with_planning(self):
+        class FakeLLMModelPlanning(Model):
+            def generate(self, messages, stop_sequences=None, **kwargs):
+                if stop_sequences == ["<end_plan>"]:  # planning call
+                    return ChatMessage(role=MessageRole.ASSISTANT, content="1. Answer.")
+                return ChatMessage(
+                    role=MessageRole.ASSISTANT,
+                    content="<code>\nfinal_answer('This is the final answer.')\n</code>",
+                )
+
+        agent = CodeAgent(tools=[], model=FakeLLMModelPlanning(), planning_interval=1)
+        with patch.object(agent.monitor.logger, "log") as log:
+            agent.run("Fake task")
+        lines = [str(call.args[0]) for call in log.call_args_list if "Duration" in str(call.args[0])]
+        labels = [line.split(":")[0] for line in lines]
+        assert labels == ["[Planning", "[Step 1"]
 
     def test_streaming_agent_text_output(self):
         agent = CodeAgent(
