@@ -430,11 +430,9 @@ def evaluate_lambda(
 
     def lambda_func(*values: Any) -> Any:
         new_state = state.copy()
+        new_state.update(defaults)
         for arg, value in zip(args, values):
             new_state[arg] = value
-        for name, value in defaults.items():
-            if name not in new_state:
-                new_state[name] = value
         return evaluate_ast(
             lambda_expression.body,
             new_state,

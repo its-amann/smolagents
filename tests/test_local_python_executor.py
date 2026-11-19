@@ -1265,6 +1265,20 @@ for i in range(3):
         res, _ = evaluate_python_code(code, {"range": range}, state={})
         assert res == [0, 1, 2]
 
+    def test_lambda_default_arg_shadows_outer_name(self):
+        # A default must win over an outer variable with the same name,
+        # e.g. the `lambda i=i: i` loop capture idiom.
+        code = """
+fs = []
+for i in range(3):
+    fs.append(lambda i=i: i)
+x = 5
+g = lambda x=3: x
+([f() for f in fs], g())
+"""
+        res, _ = evaluate_python_code(code, {"range": range}, state={})
+        assert res == ([0, 1, 2], 3)
+
     def test_lambda_default_arg_overridden(self):
         # A value passed explicitly still overrides a lambda default.
         code = """
