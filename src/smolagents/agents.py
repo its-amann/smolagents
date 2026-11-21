@@ -483,7 +483,8 @@ You have been provided with these additional arguments, that you can access dire
             # A fresh conversation must not inherit the previous run's Python
             # variables: reset the executor namespace too, so code from an
             # earlier run cannot leak into this one (issue #3234).
-            self.python_executor.reset()
+            if getattr(self, "python_executor", None) is not None:
+                self.python_executor.reset()
 
         self.logger.log_task(
             content=self.task.strip(),

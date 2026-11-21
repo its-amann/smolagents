@@ -2671,3 +2671,10 @@ def test_reset_keeps_additional_args_working():
 
     result = agent.run("task 2", additional_args={"secret_key": "s3cret"})
     assert result == "s3cret"
+
+
+def test_reset_does_not_break_tool_calling_agent():
+    """ToolCallingAgent has no python_executor, so run(reset=True) must still work."""
+    agent = ToolCallingAgent(tools=[PythonInterpreterTool()], model=FakeToolCallModel())
+    assert agent.run("What is 2 multiplied by 3.6452?") == "7.2904"
+    assert agent.run("What is 2 multiplied by 3.6452?", reset=True) == "7.2904"
